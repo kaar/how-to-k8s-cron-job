@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+set -e
+set -o nounset
+set -o pipefail
+
+build_number="${1:-0}"
+docker_registry="${2:-}"
+
+# on master branch is empty
+branch="-$(git branch --show-current)"
+branch="${branch##"-master"}"
+
+export DOCKER_REGISTRY="${2:+${2}/}"
+export VERSION="1.0${build_number:+.$build_number$branch}"
+
+echo "DOCKER_REGISTRY: ${DOCKER_REGISTRY}"
+echo "VERSION: ${VERSION}"
+
+build-image()
+{
+  local package=$1
+  local dockerfile=$2
+
+  local tag="v${VERSION}"
+  local image="${DOCKER_REGISTRY}${package}:${tag}"
+  echo "Build image: ${image}"
+  docker build -t "${image}" --build-arg VERSION="${VERSION}" -f "${dockerfile}" .
+
+  # Push image if $DOCKER_REGISTRY is set
+  [ ! -z "${DOCKER_REGISTRY}" ] \
+    && docker push $image
+
+  return 0
+}
+
+create-deployment()
+{
+  local template=$1
+  local env=$2
+  local output="deploy"
+  mkdir -p $output
+
+  # Create k8s deployment file with substituted env variable
+  # Note: ^ capitalizes the first letter.
+  export ASPNETCORE_ENVIRONMENT="${env^}"
+  envsubst < ${template} > "${output}/deployment.${env}.yaml"
+
+  return 0
+}
+
+
+build-image "hello-world-job" "src/HelloWorldJob/Dockerfile"
+create-deployment "kube/deployment.yaml" "development"
+create-deployment "kube/deployment.yaml" "beta"
+create-deployment "kube/deployment.yaml" "production"

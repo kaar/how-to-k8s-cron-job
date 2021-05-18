@@ -1,0 +1,25 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: how-to-cron-jobs
+spec:
+  schedule: "*/1 * * * *"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello-world-job
+            image: "${DOCKER_REGISTRY}hello-world-job:v${VERSION}"
+            resources:
+              limits:
+                memory: "50Mi"
+              requests:
+                memory: "20Mi"
+            env:
+              - name: "ASPNETCORE_ENVIRONMENT"
+                value: "${ASPNETCORE_ENVIRONMENT}"
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never

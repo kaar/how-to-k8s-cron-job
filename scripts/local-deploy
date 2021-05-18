@@ -1,0 +1,24 @@
+#!/bin/bash
+
+./scripts/build
+
+# Create CronJob
+kubectl create -f deploy/deployment.development.yaml
+
+# Show CronJob
+kubectl get cronjobs
+
+# Trigger manually
+jobname="how-to-cron-jobs-manual-$(uuid)"
+kubectl create job --from=cronjob/how-to-cron-jobs ${jobname}
+sleep 5
+
+pods=$(kubectl get pods --selector=job-name=$jobname --output=jsonpath={.items[*].metadata.name})
+
+# Get logs
+kubectl logs $pods
+
+# Delete cronjob
+kubectl delete -f deploy/deployment.development.yaml
+
+
