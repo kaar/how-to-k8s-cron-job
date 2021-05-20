@@ -4,6 +4,7 @@ This repository goes through how to create a Kubernetes CronJob
 ## Resources
 * [Cron jobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
 * [Kubernetes local](https://kubernetes.io/blog/2020/05/21/wsl-docker-kubernetes-on-the-windows-desktop/)
+* [Lens](https://k8slens.dev/)
 
 ## Repository structure
 
