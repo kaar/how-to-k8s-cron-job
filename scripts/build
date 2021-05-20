@@ -1,36 +1,21 @@
 #!/bin/bash
 export DOCKER_REGISTRY=""
 export VERSION="1.0.0"
-
-build-image()
-{
-  local package=$1
-  local dockerfile=$2
-
-  local tag="v${VERSION}"
-  local image="${DOCKER_REGISTRY}${package}:${tag}"
-  echo "Build image: ${image}"
-  docker build -t "${image}" --build-arg VERSION="${VERSION}" -f "${dockerfile}" .
-
-  return 0
-}
+export OUTPUT="deploy"
 
 create-deployment()
 {
-  local template=$1
-  local env=$2
-  local output="deploy"
-  mkdir -p $output
-
   # Create k8s deployment file with substituted env variable
   # Note: ^ capitalizes the first letter.
+  local env=$2
   export ASPNETCORE_ENVIRONMENT="${env^}"
-  envsubst < ${template} > "${output}/deployment.${env}.yaml"
+  envsubst < ${1} > "${OUTPUT}/deployment.${env}.yaml"
 
   return 0
 }
 
+docker build -t "hello-world-job:v${VERSION}" --build-arg VERSION="${VERSION}" -f "src/HelloWorldJob/Dockerfile" .
 
-build-image "hello-world-job" "src/HelloWorldJob/Dockerfile"
+mkdir -p $OUTPUT
 create-deployment "kube/deployment.yaml" "development"
 create-deployment "kube/deployment.yaml" "production"
